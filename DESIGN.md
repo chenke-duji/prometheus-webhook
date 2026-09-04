@@ -351,7 +351,7 @@ Alertmanager 推送的 JSON 结构（参考 Alertmanager 官方文档）：
 
 ## 4. RawEvent 构建
 
-每条 alert 构建为一个 RawEvent，JSON 结构严格对齐 cep-engine 的 `com.raysdata.cep.model.RawEvent`（Gson 反序列化，JSON key 必须与 Java 字段名一致）：
+每条 alert 构建为一个 RawEvent，JSON 结构严格对齐 cep-engine 的 `com.dujitech.cep.model.RawEvent`（Gson 反序列化，JSON key 必须与 Java 字段名一致）：
 
 ```json
 {
@@ -638,8 +638,8 @@ Alertmanager 的 `labels.severity` 是用户自定义字符串，常见值为 `c
  * agentType = source 值（默认 "alertmanager"，多实例时与 source 一致）
  */
 
-import com.raysdata.cep.model.AlarmEvent
-import com.raysdata.cep.model.EventType
+import com.dujitech.cep.model.AlarmEvent
+import com.dujitech.cep.model.EventType
 
 def event = new AlarmEvent()
 def metadata = rawEvent.getMetadata() ?: [:]
@@ -1005,7 +1005,7 @@ receivers:
 ### 修改：cep-engine（`D:/63.CEP/cep-engine/`）
 
 1. 新增 `conf/groovy/formal/alertmanager_parser.groovy` — 默认 Groovy parser（alertKey = fingerprint）
-2. 修改 `src/main/java/com/raysdata/cep/groovy/ScriptRegistry.java` — `extractOidMatchRules()` 新增 alertmanager 分支：
+2. 修改 `src/main/java/com/dujitech/cep/groovy/ScriptRegistry.java` — `extractOidMatchRules()` 新增 alertmanager 分支：
    - 从文件名提取完整 source 值（`alertmanager_parser.groovy` → `"alertmanager"`，`alertmanager_prod_parser.groovy` → `"alertmanager_prod"`）
    - 约 5 行替换（含注释）
 

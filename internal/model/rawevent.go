@@ -1,6 +1,6 @@
 // Package model defines the RawEvent JSON structure that prometheus-webhook
 // builds and forwards to cep-engine. Field names and structure are strictly
-// aligned with cep-engine's com.raysdata.cep.model.RawEvent (deserialized
+// aligned with cep-engine's com.dujitech.cep.model.RawEvent (deserialized
 // with Gson, so JSON keys must match the Java field names exactly).
 package model
 
