@@ -31,7 +31,7 @@ func (noopRecorder) IncDropped(uint64)       {}
 // Producers call Enqueue; workers batch events and push them through a
 // Forwarder. When the bounded channel is full the queueFullPolicy applies.
 type BatchQueue struct {
-	cfg       ForwardConfig
+	cfg       Config
 	forwarder Forwarder
 	recorder  Recorder
 	log       *slog.Logger
@@ -43,7 +43,7 @@ type BatchQueue struct {
 }
 
 // NewBatchQueue creates a batch queue with the given config and forwarder.
-func NewBatchQueue(cfg ForwardConfig, f Forwarder, rec Recorder, log *slog.Logger) *BatchQueue {
+func NewBatchQueue(cfg Config, f Forwarder, rec Recorder, log *slog.Logger) *BatchQueue {
 	if rec == nil {
 		rec = noopRecorder{}
 	}
@@ -51,19 +51,19 @@ func NewBatchQueue(cfg ForwardConfig, f Forwarder, rec Recorder, log *slog.Logge
 		log = slog.Default()
 	}
 	if cfg.BatchSize <= 0 {
-		cfg.BatchSize = DefaultForwardConfig.BatchSize
+		cfg.BatchSize = DefaultConfig.BatchSize
 	}
 	if cfg.BatchFlushInterval <= 0 {
-		cfg.BatchFlushInterval = DefaultForwardConfig.BatchFlushInterval
+		cfg.BatchFlushInterval = DefaultConfig.BatchFlushInterval
 	}
 	if cfg.Workers <= 0 {
-		cfg.Workers = DefaultForwardConfig.Workers
+		cfg.Workers = DefaultConfig.Workers
 	}
 	if cfg.QueueCapacity <= 0 {
-		cfg.QueueCapacity = DefaultForwardConfig.QueueCapacity
+		cfg.QueueCapacity = DefaultConfig.QueueCapacity
 	}
 	if cfg.QueueFullPolicy == "" {
-		cfg.QueueFullPolicy = DefaultForwardConfig.QueueFullPolicy
+		cfg.QueueFullPolicy = DefaultConfig.QueueFullPolicy
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &BatchQueue{

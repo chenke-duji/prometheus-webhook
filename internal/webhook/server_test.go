@@ -3,11 +3,11 @@ package webhook
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"log/slog"
 	"prometheus-webhook/internal/config"
 	"prometheus-webhook/internal/forward"
 	"prometheus-webhook/internal/metrics"
@@ -31,7 +31,7 @@ func TestBearerToken_Missing(t *testing.T) {
 			HealthPath:  "/healthz",
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 	req := httptest.NewRequest("POST", "/webhook", strings.NewReader("{}"))
@@ -54,7 +54,7 @@ func TestBearerToken_Wrong(t *testing.T) {
 			HealthPath:  "/healthz",
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 	req := httptest.NewRequest("POST", "/webhook", strings.NewReader("{}"))
@@ -79,7 +79,7 @@ func TestBearerToken_Correct(t *testing.T) {
 			MaxBodyBytes: 1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 
@@ -106,7 +106,7 @@ func TestAuthTokenEmpty_RejectsAll(t *testing.T) {
 			HealthPath:  "/healthz",
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 	req := httptest.NewRequest("POST", "/webhook", strings.NewReader("{}"))
@@ -132,7 +132,7 @@ func TestIPAllowlist_Allowed(t *testing.T) {
 			MaxBodyBytes: 1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 	body := `{"version":"4","status":"firing","receiver":"test","alerts":[]}`
@@ -159,7 +159,7 @@ func TestIPAllowlist_Blocked(t *testing.T) {
 			MaxBodyBytes: 1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 	req := httptest.NewRequest("POST", "/webhook", strings.NewReader("{}"))
@@ -186,7 +186,7 @@ func TestXFF_TrustedProxy(t *testing.T) {
 			MaxBodyBytes:   1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 
@@ -217,7 +217,7 @@ func TestXFF_UntrustedProxy(t *testing.T) {
 			MaxBodyBytes:   1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 
@@ -247,7 +247,7 @@ func TestXFF_NoTrustedProxies_IgnoresHeader(t *testing.T) {
 			MaxBodyBytes:   1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 
@@ -275,7 +275,7 @@ func TestAlertPayloadParsing(t *testing.T) {
 			MaxBodyBytes: 1048576,
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 
@@ -338,7 +338,7 @@ func TestHealthEndpoint(t *testing.T) {
 			HealthPath:  "/healthz",
 		},
 		CEPEngine: config.CEPEngineConfig{BaseURL: "http://localhost:8080"},
-		Forward:   forward.DefaultForwardConfig,
+		Forward:   forward.DefaultConfig,
 	}
 	srv := mustNewServer(t, cfg)
 
@@ -361,7 +361,7 @@ func TestHealthEndpoint(t *testing.T) {
 func mustNewServer(t *testing.T, cfg *config.Config) *Server {
 	t.Helper()
 	fwd := &noopForwarder{}
-	fwdCfg := forward.ForwardConfig{
+	fwdCfg := forward.Config{
 		BatchSize:          10,
 		BatchFlushInterval: 100,
 		Workers:            1,

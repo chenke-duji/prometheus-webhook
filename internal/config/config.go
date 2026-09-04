@@ -56,11 +56,11 @@ type LoggingConfig struct {
 
 // Config is the root configuration.
 type Config struct {
-	Webhook   WebhookConfig         `yaml:"webhook"`
-	TLS       TLSConfig             `yaml:"tls"`
-	CEPEngine CEPEngineConfig       `yaml:"cepEngine"`
-	Forward   forward.ForwardConfig `yaml:"forward"`
-	Logging   LoggingConfig         `yaml:"logging"`
+	Webhook   WebhookConfig   `yaml:"webhook"`
+	TLS       TLSConfig       `yaml:"tls"`
+	CEPEngine CEPEngineConfig `yaml:"cepEngine"`
+	Forward   forward.Config  `yaml:"forward"`
+	Logging   LoggingConfig   `yaml:"logging"`
 }
 
 // Load reads a YAML config file and applies defaults and env overrides.
@@ -100,7 +100,7 @@ func defaultConfig() *Config {
 			RetryMax:   3,
 			RetryBase:  200,
 		},
-		Forward: forward.DefaultForwardConfig,
+		Forward: forward.DefaultConfig,
 		Logging: LoggingConfig{
 			Level:      "info",
 			MaxSizeMB:  100,

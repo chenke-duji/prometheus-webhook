@@ -33,8 +33,8 @@ const (
 	PolicySingle QueueFullPolicy = "single"
 )
 
-// DefaultForwardConfig carries default values applied when a config omits them.
-var DefaultForwardConfig = ForwardConfig{
+// DefaultConfig carries default values applied when a config omits them.
+var DefaultConfig = Config{
 	BatchSize:          50,
 	BatchFlushInterval: 200, // milliseconds
 	Workers:            4,
@@ -43,8 +43,8 @@ var DefaultForwardConfig = ForwardConfig{
 	DropLogEnabled:     true,
 }
 
-// ForwardConfig holds queue and batching parameters.
-type ForwardConfig struct {
+// Config holds queue and batching parameters.
+type Config struct {
 	BatchSize          int    `yaml:"batchSize"`
 	BatchFlushInterval int    `yaml:"batchFlushIntervalMs"`
 	Workers            int    `yaml:"workers"`

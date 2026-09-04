@@ -36,12 +36,6 @@ func (f *recordingForwarder) ForwardSingle(_ context.Context, event *model.RawEv
 
 func (f *recordingForwarder) Close() error { return nil }
 
-func (f *recordingForwarder) batchCount() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return len(f.batches)
-}
-
 func (f *recordingForwarder) totalForwarded() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -77,7 +71,7 @@ func testEvent(s string) *model.RawEvent {
 
 func TestEnqueue_AcceptsEvent(t *testing.T) {
 	fwd := &recordingForwarder{}
-	cfg := ForwardConfig{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 10, QueueFullPolicy: "drop"}
+	cfg := Config{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 10, QueueFullPolicy: "drop"}
 	q := NewBatchQueue(cfg, fwd, nil, slog.Default())
 	if !q.Enqueue(testEvent("e1")) {
 		t.Error("enqueue should succeed on non-full queue")
@@ -87,7 +81,7 @@ func TestEnqueue_AcceptsEvent(t *testing.T) {
 func TestEnqueue_Drop_WhenFull(t *testing.T) {
 	fwd := &recordingForwarder{}
 	rec := &testRec{}
-	cfg := ForwardConfig{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 2, QueueFullPolicy: "drop"}
+	cfg := Config{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 2, QueueFullPolicy: "drop"}
 	q := NewBatchQueue(cfg, fwd, rec, slog.Default())
 
 	q.Enqueue(testEvent("e1"))
@@ -105,7 +99,7 @@ func TestEnqueue_Drop_WhenFull(t *testing.T) {
 
 func TestEnqueue_Single_CallsForwardSingle(t *testing.T) {
 	fwd := &recordingForwarder{}
-	cfg := ForwardConfig{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 1, QueueFullPolicy: "single"}
+	cfg := Config{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 1, QueueFullPolicy: "single"}
 	q := NewBatchQueue(cfg, fwd, nil, slog.Default())
 
 	// First enqueue fills the 1-capacity channel (Workers=0, no draining).
@@ -122,7 +116,7 @@ func TestEnqueue_Single_CallsForwardSingle(t *testing.T) {
 func TestEnqueue_RecordsReceived(t *testing.T) {
 	fwd := &recordingForwarder{}
 	rec := &testRec{}
-	cfg := ForwardConfig{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 10, QueueFullPolicy: "drop"}
+	cfg := Config{BatchSize: 10, BatchFlushInterval: 100, Workers: 0, QueueCapacity: 10, QueueFullPolicy: "drop"}
 	q := NewBatchQueue(cfg, fwd, rec, slog.Default())
 
 	q.Enqueue(testEvent("e1"))
@@ -135,7 +129,7 @@ func TestEnqueue_RecordsReceived(t *testing.T) {
 
 func TestWorker_BatchForwarding(t *testing.T) {
 	fwd := &recordingForwarder{}
-	cfg := ForwardConfig{BatchSize: 3, BatchFlushInterval: 500, Workers: 1, QueueCapacity: 100, QueueFullPolicy: "drop"}
+	cfg := Config{BatchSize: 3, BatchFlushInterval: 500, Workers: 1, QueueCapacity: 100, QueueFullPolicy: "drop"}
 	q := NewBatchQueue(cfg, fwd, nil, slog.Default())
 	q.Start()
 	defer q.Close()
@@ -161,7 +155,7 @@ func TestWorker_BatchForwarding(t *testing.T) {
 
 func TestWorker_FlushOnTimer(t *testing.T) {
 	fwd := &recordingForwarder{}
-	cfg := ForwardConfig{BatchSize: 100, BatchFlushInterval: 50, Workers: 1, QueueCapacity: 100, QueueFullPolicy: "drop"}
+	cfg := Config{BatchSize: 100, BatchFlushInterval: 50, Workers: 1, QueueCapacity: 100, QueueFullPolicy: "drop"}
 	q := NewBatchQueue(cfg, fwd, nil, slog.Default())
 	q.Start()
 	defer q.Close()
@@ -185,7 +179,7 @@ func TestWorker_FlushOnTimer(t *testing.T) {
 
 func TestClose_DrainsRemaining(t *testing.T) {
 	fwd := &recordingForwarder{}
-	cfg := ForwardConfig{BatchSize: 100, BatchFlushInterval: 10000, Workers: 1, QueueCapacity: 100, QueueFullPolicy: "drop"}
+	cfg := Config{BatchSize: 100, BatchFlushInterval: 10000, Workers: 1, QueueCapacity: 100, QueueFullPolicy: "drop"}
 	q := NewBatchQueue(cfg, fwd, nil, slog.Default())
 	q.Start()
 
