@@ -29,9 +29,10 @@ jobs:
         run: make vet
 
       - name: Lint (golangci-lint)
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v1.64.8
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+            | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+          golangci-lint run ./...
 
       - name: Test
         run: make test
