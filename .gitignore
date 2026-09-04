@@ -1,0 +1,23 @@
+# Build output
+bin/
+release/
+
+# Test artifacts
+coverage.out
+test-config.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Config (don't commit production configs)
+config.yaml

@@ -1,0 +1,43 @@
+# ============================================================================
+# prometheus-webhook CI pipeline
+# Runs vet, test, lint (golangci-lint) and coverage on every push and PR.
+# ============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  quality:
+    name: Vet + Test + Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet
+        run: make vet
+
+      - name: Lint (golangci-lint)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.8
+
+      - name: Test
+        run: make test
+
+      - name: Coverage
+        run: make coverage
+
+      - name: Build (all platforms)
+        run: make build-all

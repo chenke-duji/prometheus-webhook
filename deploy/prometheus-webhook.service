@@ -1,0 +1,89 @@
+# ============================================================================
+# prometheus-webhook systemd service unit
+# ============================================================================
+# Install:
+#   sudo cp deploy/prometheus-webhook.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now prometheus-webhook
+#
+# The binary must be at /opt/prometheus-webhook/bin/webhookd (adjust ExecStart if different).
+# Config file at /opt/prometheus-webhook/config.yaml (see config.example.yaml).
+# ============================================================================
+
+[Unit]
+Description=Prometheus Webhook Daemon (prometheus-webhook)
+Documentation=https://github.com/your-org/prometheus-webhook
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# ---- Runtime paths ----
+ExecStart=/opt/prometheus-webhook/bin/webhookd-linux-amd64 -config /opt/prometheus-webhook/config.yaml
+WorkingDirectory=/opt/prometheus-webhook
+
+# ---- Run as non-root user ----
+User=webhookd
+Group=webhookd
+
+# ---- Privilege hardening ----
+NoNewPrivileges=true
+
+# Port 9093 > 1024, no special capabilities needed.
+# If binding to port < 1024, add: CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Filesystem isolation.
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/prometheus-webhook /opt/prometheus-webhook
+
+# Network namespace: keep network access (needs HTTP listen + forward to cep-engine).
+# PrivateNetwork is NOT set.
+
+# Device and kernel isolation.
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+
+# Restrict system calls to a sane subset.
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @mount @swap @reboot @clock @module @raw-io
+SystemCallErrorNumber=EPERM
+
+# Memory write protection.
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+
+# Resource limits.
+LimitNOFILE=65536
+LimitNPROC=512
+
+# ---- Restart policy ----
+Restart=on-failure
+RestartSec=5s
+StartLimitBurst=10
+StartLimitIntervalSec=120
+
+# ---- Logging ----
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=webhookd
+
+# ---- Security labels (SELinux) ----
+# On SELinux-enabled systems, uncomment to confine the service:
+# SELinuxContext=system_u:system_r:webhookd_t:s0
+
+[Install]
+WantedBy=multi-user.target

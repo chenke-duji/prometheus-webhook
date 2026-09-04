@@ -1,0 +1,25 @@
+# Normalize line endings: all text files use LF in the repo
+* text=auto eol=lf
+
+# Go source
+*.go    text eol=lf
+
+# Config / build
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.mod   text eol=lf
+*.sum   text eol=lf
+Makefile text eol=lf
+
+# Shell / service
+*.sh     text eol=lf
+*.service text eol=lf
+
+# Docs
+*.md    text eol=lf
+
+# Binary files (no EOL conversion)
+*.exe   binary
+*.png   binary
+*.jpg   binary
+*.ico   binary

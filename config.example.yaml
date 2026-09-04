@@ -1,0 +1,57 @@
+# ============================================================
+# prometheus-webhook 配置文件示例
+# 复制为 config.yaml 并修改后使用。
+# 所有路径均支持环境变量覆盖（前缀 AMWH_*）。
+# ============================================================
+
+# ---- Webhook HTTP Server ----
+webhook:
+  listenAddr: "0.0.0.0:9093"     # HTTP 监听地址（/webhook + /metrics + /healthz 共用）
+  path: "/webhook"               # Alertmanager webhook 接收路径
+  source: "alertmanager"         # RawEvent.source 值，也用于 ScriptRegistry 路由匹配
+                                   # 多实例时改为唯一值如 "alertmanager_prod"
+                                   # 对应 cep-engine 的 alertmanager_prod_parser.groovy
+  maxBodyBytes: 1048576          # 请求体大小上限（1 MiB）
+  allowedCIDRs: []               # Alertmanager 来源 IP/CIDR 白名单；空则仅靠 token 防护
+                                   # 反向代理场景：配 AM 网段，trustedProxies 配代理 IP
+                                   # 示例: ["10.0.0.0/8", "192.168.1.100/32"]
+  trustedProxies: []             # 信任的反向代理 IP/CIDR；空=不信任任何 XFF，直连模式
+                                   # 反向代理场景必填，如: ["127.0.0.1/32", "10.0.0.2/32"]
+  authToken: ""                 # Bearer token，必须显式配置（空=拒绝所有请求）
+                                   # 生成: openssl rand -hex 32
+  domainId: "default"            # CEP 域 ID，多域部署时按实例配置
+  metricsPath: "/metrics"        # Prometheus 指标暴露路径
+  healthPath: "/healthz"        # 健康检查路径
+
+# ---- TLS (可选，零信任环境) ----
+tls:
+  enabled: false
+  certFile: ""                   # 服务端证书文件路径
+  keyFile: ""                    # 服务端私钥文件路径
+  clientCAFile: ""               # 客户端 CA 证书（启用 mTLS 校验）
+
+# ---- Downstream cep-engine ----
+cepEngine:
+  baseUrl: "http://127.0.0.1:8080"
+  batchPath: "/api/v1/events/batch"
+  singlePath: "/api/v1/events"
+  authToken: ""                  # 可选 Bearer token
+  timeoutMs: 5000
+  retryMax: 3
+  retryBaseMs: 200
+
+# ---- Forwarding queue ----
+forward:
+  batchSize: 50                  # 攒批条数阈值
+  batchFlushIntervalMs: 200      # 攒批时间阈值（毫秒）
+  workers: 4                     # worker pool 并发数
+  queueCapacity: 10000           # 有界队列容量
+  queueFullPolicy: "drop"       # drop | block | single
+  dropLogEnabled: true
+
+# ---- Logging ----
+logging:
+  level: "info"                  # debug | info | warn | error
+  file: ""                       # 空 -> stdout
+  maxSizeMB: 100
+  maxBackups: 5
