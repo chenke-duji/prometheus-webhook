@@ -1,8 +1,23 @@
 # prometheus-webhook
 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/Go-1.22-00ADD8.svg?logo=go&logoColor=white)](go.mod)
+[![Release](https://img.shields.io/github/v/release/chenke-duji/prometheus-webhook)](https://github.com/chenke-duji/prometheus-webhook/releases)
+
 > Alertmanager Webhook Receiver for CEP (Complex Event Processing) Engine
 
+> **Bearer + CIDR + mTLS 三层安全 · firing/resolved 自动配对 · >40,000 alert/s 接收 · Prometheus 自监控**
+
 `prometheus-webhook` 是一个 HTTP webhook 守护进程，接收 Prometheus Alertmanager 推送的告警通知，将每条告警拆分为独立的 RawEvent，批量转发给 cep-engine。与 `trap-daemon`（SNMP Trap）、`syslog-daemon`（Syslog）同级，共享相同的下游管道。
+
+```mermaid
+flowchart LR
+    A[Prometheus Alertmanager] -->|POST /webhook<br/>Bearer/CIDR/mTLS| B[prometheus-webhook]
+    B -->|拆分 alerts[]| C{有界队列<br/>攒批}
+    C -->|REST 批量转发| D[cep-engine]
+    D --> E[(MongoDB)]
+    B -.->|自监控| F[/metrics/]
+```
 
 ## 核心特性
 
@@ -88,6 +103,40 @@ cp config.example.yaml config.yaml
 | `alertmanager_auth_rejected_total` | counter | 安全层拒绝数 |
 | `alertmanager_queue_depth` | gauge | 当前队列深度 |
 | `alertmanager_throughput_5m` | gauge | 5 分钟吞吐量 |
+
+## 性能（压测）
+
+> 压测环境：WSL AlmaLinux-8（16 核 / 15.7G），后端 cep-engine `-Xmx4g -XX:+UseG1GC`，
+> MongoDB 6.0 单机（端口 27015）。压测器：`perf-test/loadgen` 的 `webhookload`
+> （模拟 Alertmanager 带 Bearer token 的 POST /webhook，随机 fingerprint/instance/startsAt，
+> 每请求 100 条告警，8 worker，令牌桶精确控速）。
+
+### 梯度压测结果
+
+| 目标速率(alert/s) | 实际吞吐(alert/s) | 接收(20s) | 转发(20s) | 丢弃(20s) | 丢弃率 | P50 | P99 |
+|------------------|------------------|----------|----------|----------|--------|-----|-----|
+| 5000 | 5249 | 105002 | 104900 | 0 | 0.0% | 332µs | 8.7ms |
+| 10000 | 10499 | 210000 | 209850 | 234 | 0.1% | 528µs | 8.5ms |
+| 15000 | 15748 | 314996 | 214850 | 90164 | 28.6% | 723µs | 9.2ms |
+| 20000 | 20991 | 419985 | 205200 | 215072 | 51.2% | 798µs | 9.4ms |
+| 30000 | 31494 | 630025 | 210750 | 418538 | 66.4% | 987µs | 9.8ms |
+| 40000 | 41990 | 840009 | 188250 | 651259 | 77.5% | 1.07ms | 10.7ms |
+
+### 结论
+
+- **接收能力 > 40000 alert/s**：HTTP 接收 + 拆分 + 入队无压力（实测 41990/s 仍达目标，
+  受限于压测器单进程发送能力）。
+- **转发瓶颈约 10000–10500 alert/s**：受 cep-engine 单机写入速度限制（与 trap/syslog-daemon
+  同量级）。≤10000/s 时丢弃率 <0.1%；超过后队列满按 `drop` 策略丢弃。
+- **内存占用极低**：RSS 仅 ~21MB。
+- **延迟优秀**：P50 亚毫秒级，P99 < 11ms。
+
+### 调优建议
+
+高吞吐（>10000/s）场景，参照 syslog-daemon 的调优路径：
+
+- `forward.workers` 4→8、`batchSize` 50→100、`queueCapacity` 10000→50000，降低丢弃率；
+- 后端 cep-engine 水平扩展（多实例 + nginx 负载均衡）是解除转发瓶颈的根本手段。
 
 ## Alertmanager 对接
 
